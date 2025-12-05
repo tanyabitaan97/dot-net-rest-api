@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 var jwtSection = builder.Configuration.GetSection("Jwt");
@@ -61,15 +62,17 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-
-var connectionString = builder.Configuration.GetConnectionString("MySqlConn");
-builder.Services.AddScoped(_ => new MySqlConnection(connectionString));
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseMySql(
+        builder.Configuration.GetConnectionString("MySqlConn"),
+        ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("MySqlConn"))
+    )
+);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
-
 
 app.UseHttpsRedirection();
 app.UseAuthentication(); 
