@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using dotnet.Models;
+using dotnet.Dto;
 using Microsoft.AspNetCore.Authorization;
 
 
@@ -34,4 +35,42 @@ public class EmployeeController : ControllerBase
 
         return Ok(employees);
     }
+
+    [HttpPost("create-full")]
+    public async Task<IActionResult> CreateFull(EmployeeCreateDto dto)
+    {
+        var employee = new Employee
+        {
+            Name = dto.Name
+        };
+
+        foreach (var lbDto in dto.Leaderboards)
+        {
+            var leaderboard = new Leaderboard
+            {
+                Score = lbDto.Score,
+                Employee = employee
+            };
+
+
+            foreach (var chDto in lbDto.Challenges)
+            {
+                var challenge = new Challenge
+                {
+                    ChallengeName = chDto.ChallengeName,
+                    ChallengeType = chDto.ChallengeType
+                };
+
+                leaderboard.Challenges.Add(challenge);
+            }
+
+            employee.Leaderboards.Add(leaderboard);
+        }
+
+        _context.Employees.Add(employee);
+        await _context.SaveChangesAsync();
+
+        return Ok(employee);
+    }
+
 }
