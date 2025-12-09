@@ -24,14 +24,5 @@ public class ChallengeController : ControllerBase
         return Ok(challenge);
     }
 
-    [Authorize]   
-    [HttpGet]
-    public async Task<IActionResult> GetAll()
-    {
-        var list = await _context.Challenges
-            .Include(c => c.Leaderboards)
-            .ToListAsync();
 
-        return Ok(list);
-    }
 }

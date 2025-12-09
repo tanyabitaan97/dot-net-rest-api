@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using dotnet.Models;
 using dotnet.Dto;
 using Microsoft.AspNetCore.Authorization;
+using EFCore.BulkExtensions;
+
 
 
 [ApiController]
@@ -72,5 +74,38 @@ public class EmployeeController : ControllerBase
 
         return Ok(employee);
     }
+
+
+[HttpPost("create-full-bulk")]
+public async Task<IActionResult> CreateFullBulk(List<EmployeeCreateDto> dtos)
+{
+    // Convert DTOs → Entity Graph
+    var employees = dtos.Select(dto => new Employee
+    {
+        Name = dto.Name,
+        Leaderboards = dto.Leaderboards.Select(lbDto => new Leaderboard
+        {
+            Score = lbDto.Score,
+            Challenges = lbDto.Challenges.Select(chDto => new Challenge
+            {
+                ChallengeName = chDto.ChallengeName,
+                ChallengeType = chDto.ChallengeType
+            }).ToList()
+        }).ToList()
+    }).ToList();
+
+
+    await _context.BulkInsertAsync(
+        employees,
+        new BulkConfig
+        {
+            IncludeGraph = true,    
+            SetOutputIdentity = true
+        }
+    );
+
+    return Ok("Bulk Insert Successful (Graph Insert Enabled)");
+}
+
 
 }
