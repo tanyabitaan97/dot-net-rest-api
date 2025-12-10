@@ -20,17 +20,24 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
 {
     base.OnModelCreating(modelBuilder);
 
-    // Employee -> Leaderboards (1-many)
     modelBuilder.Entity<Leaderboard>()
         .HasOne(lb => lb.Employee)
         .WithMany(emp => emp.Leaderboards)
         .HasForeignKey(lb => lb.EmployeeId);
 
-    // Leaderboard -> Challenges (1-many)
-    modelBuilder.Entity<Challenge>()
-        .HasOne(ch => ch.Leaderboard)
-        .WithMany(lb => lb.Challenges)
-        .HasForeignKey(ch => ch.LeaderboardId);
+
+    modelBuilder.Entity<LeaderboardChallenge>()
+        .HasKey(lc => new { lc.LeaderboardId, lc.ChallengeId });
+
+    modelBuilder.Entity<LeaderboardChallenge>()
+        .HasOne(lc => lc.Leaderboard)
+        .WithMany(lb => lb.LeaderboardChallenges)
+        .HasForeignKey(lc => lc.LeaderboardId);
+
+    modelBuilder.Entity<LeaderboardChallenge>()
+        .HasOne(lc => lc.Challenge)
+        .WithMany(ch => ch.LeaderboardChallenges)
+        .HasForeignKey(lc => lc.ChallengeId);
 }
 
 }

@@ -38,73 +38,55 @@ public class EmployeeController : ControllerBase
         return Ok(employees);
     }
 
-    [HttpPost("create-full")]
-    public async Task<IActionResult> CreateFull(EmployeeCreateDto dto)
-    {
-        var employee = new Employee
-        {
-            Name = dto.Name
-        };
-
-        foreach (var lbDto in dto.Leaderboards)
-        {
-            var leaderboard = new Leaderboard
-            {
-                Score = lbDto.Score,
-                Employee = employee
-            };
-
-
-            foreach (var chDto in lbDto.Challenges)
-            {
-                var challenge = new Challenge
-                {
-                    ChallengeName = chDto.ChallengeName,
-                    ChallengeType = chDto.ChallengeType
-                };
-
-                leaderboard.Challenges.Add(challenge);
-            }
-
-            employee.Leaderboards.Add(leaderboard);
-        }
-
-        _context.Employees.Add(employee);
-        await _context.SaveChangesAsync();
-
-        return Ok(employee);
-    }
-
 
 [HttpPost("create-full-bulk")]
 public async Task<IActionResult> CreateFullBulk(List<EmployeeCreateDto> dtos)
 {
-    // Convert DTOs → Entity Graph
     var employees = dtos.Select(dto => new Employee
     {
         Name = dto.Name,
         Leaderboards = dto.Leaderboards.Select(lbDto => new Leaderboard
         {
             Score = lbDto.Score,
-            Challenges = lbDto.Challenges.Select(chDto => new Challenge
-            {
-                ChallengeName = chDto.ChallengeName,
-                ChallengeType = chDto.ChallengeType
-            }).ToList()
-        }).ToList()
-    }).ToList();
 
+            LeaderboardChallenges = lbDto.Challenges.Select(chDto =>
+{
+    if (chDto.ChallengeId.HasValue)
+    {
+        // Link to existing challenge
+        return new LeaderboardChallenge
+        {
+            ChallengeId = chDto.ChallengeId.Value
+        };
+    }
+    else
+    {
+        // Create a new challenge row and link to it
+        return new LeaderboardChallenge
+        {
+            Challenge = new Challenge
+            {
+                ChallengeName = chDto.ChallengeName!,
+                ChallengeType = chDto.ChallengeType!
+            }
+        };
+    }
+}).ToList()
+
+        }).ToList()
+
+    }).ToList();
 
     await _context.BulkInsertAsync(
         employees,
         new BulkConfig
         {
-            IncludeGraph = true,    
+            IncludeGraph = true,
             SetOutputIdentity = true
         }
     );
 
-    return Ok("Bulk Insert Successful (Graph Insert Enabled)");
+    return Ok("Bulk Insert Successful");
 }
 
 
