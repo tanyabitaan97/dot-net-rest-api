@@ -7,8 +7,10 @@ public class Leaderboard
 
     public int Score { get; set; }
 
+    [JsonIgnore]
     public Employee Employee { get; set; }
 
-    public List<LeaderboardChallenge> LeaderboardChallenges { get; set; } = new();
+ 
+public List<LeaderboardChallenge> LeaderboardChallenges { get; set; } = new();
 }
 

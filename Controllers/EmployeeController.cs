@@ -12,30 +12,12 @@ using EFCore.BulkExtensions;
 public class EmployeeController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly EmployeeService _employeeService;
 
-    public EmployeeController(AppDbContext context)
+    public EmployeeController(AppDbContext context,EmployeeService employeeService)
     {
         _context = context;
-    }
-
-    [Authorize]  
-    [HttpPost]
-    public async Task<IActionResult> Create(Employee employee)
-    {
-        _context.Employees.Add(employee);
-        await _context.SaveChangesAsync();
-        return Ok(employee);
-    }
-
-    [Authorize]
-    [HttpGet]
-    public async Task<IActionResult> GetAll()
-    {
-        var employees = await _context.Employees
-            .Include(e => e.Leaderboards)
-            .ToListAsync();
-
-        return Ok(employees);
+        _employeeService = employeeService;
     }
 
 
@@ -89,5 +71,17 @@ public async Task<IActionResult> CreateFullBulk(List<EmployeeCreateDto> dtos)
     return Ok("Bulk Insert Successful");
 }
 
+[HttpGet("employees")]
+public async Task<IActionResult> GetEmployees(
+    int pageNumber = 1,
+    int pageSize = 10,
+    string sortBy = "EmployeeId",
+    string sortDirection = "asc")
+{
+    var result = await _employeeService.GetPagedEmployeesAsync(
+        pageNumber, pageSize, sortBy, sortDirection);
+
+    return Ok(result);
+}
 
 }
